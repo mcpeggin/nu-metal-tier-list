@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, watch, computed, onMounted, onUnmounted } from 'vue'
 import TierRow from './components/TierRow.vue'
 import ImagePool from './components/ImagePool.vue'
 import { roomRef, onValue, set } from './firebase'
@@ -136,6 +136,31 @@ function onGlobalPaste(e) {
     }
   }
 }
+
+const latestImage = computed(() => {
+  let best = null
+  for (const img of poolImages.value) {
+    if (!best || img.id > best.id) best = img
+  }
+  for (const tier of tiers) {
+    for (const img of tier.images || []) {
+      if (!best || img.id > best.id) best = img
+    }
+  }
+  return best
+})
+
+const defaultFavicon = '/favicon.ico'
+
+watch(
+  latestImage,
+  (img) => {
+    const link = document.querySelector("link[rel='icon']")
+    if (!link) return
+    link.href = img ? img.src : defaultFavicon
+  },
+  { immediate: true }
+)
 
 let lastSync = null
 let writeTimer = null
