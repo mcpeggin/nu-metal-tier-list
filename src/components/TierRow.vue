@@ -5,7 +5,7 @@ const props = defineProps({
   tier: Object,
 })
 
-const emit = defineEmits(['drop', 'rename', 'delete'])
+const emit = defineEmits(['drop', 'rename', 'delete', 'reorder'])
 
 const editing = ref(false)
 const editName = ref('')
@@ -23,7 +23,12 @@ function finishEditing() {
   editing.value = false
 }
 
+function isTierDrag(e) {
+  return Array.from(e.dataTransfer.types).includes('application/x-tier-row')
+}
+
 function onDragOver(e) {
+  if (isTierDrag(e)) return
   e.preventDefault()
   e.currentTarget.classList.add('drag-over')
 }
@@ -33,6 +38,7 @@ function onDragLeave(e) {
 }
 
 function onDrop(e) {
+  if (isTierDrag(e)) return
   e.preventDefault()
   e.currentTarget.classList.remove('drag-over')
   const data = e.dataTransfer.getData('application/json')
@@ -48,11 +54,58 @@ function onDragStart(e, imageId) {
     JSON.stringify({ imageId, fromTier: props.tier.id }),
   )
 }
+
+function onRowDragStart(e) {
+  if (editing.value) {
+    e.preventDefault()
+    return
+  }
+  e.dataTransfer.setData('application/x-tier-row', String(props.tier.id))
+  e.dataTransfer.effectAllowed = 'move'
+}
+
+function rowInsertPosition(e) {
+  const rect = e.currentTarget.getBoundingClientRect()
+  return e.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+}
+
+function onRowDragOver(e) {
+  if (!isTierDrag(e)) return
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  const pos = rowInsertPosition(e)
+  e.currentTarget.classList.toggle('insert-above', pos === 'before')
+  e.currentTarget.classList.toggle('insert-below', pos === 'after')
+}
+
+function onRowDragLeave(e) {
+  e.currentTarget.classList.remove('insert-above', 'insert-below')
+}
+
+function onRowDrop(e) {
+  if (!isTierDrag(e)) return
+  e.preventDefault()
+  const pos = rowInsertPosition(e)
+  e.currentTarget.classList.remove('insert-above', 'insert-below')
+  const sourceId = Number(e.dataTransfer.getData('application/x-tier-row'))
+  if (!sourceId || sourceId === props.tier.id) return
+  emit('reorder', { sourceId, targetId: props.tier.id, position: pos })
+}
 </script>
 
 <template>
-  <div class="tier-row">
-    <div class="tier-label" :style="{ backgroundColor: tier.color }">
+  <div
+    class="tier-row"
+    @dragover="onRowDragOver"
+    @dragleave="onRowDragLeave"
+    @drop="onRowDrop"
+  >
+    <div
+      class="tier-label"
+      :style="{ backgroundColor: tier.color }"
+      :draggable="!editing"
+      @dragstart="onRowDragStart"
+    >
       <input
         v-if="editing"
         v-model="editName"

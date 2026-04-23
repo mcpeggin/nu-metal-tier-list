@@ -94,6 +94,18 @@ function renameTier({ tierId, newName }) {
   if (tier) tier.name = newName
 }
 
+function reorderTier({ sourceId, targetId, position }) {
+  const srcIdx = tiers.findIndex((t) => t.id === sourceId)
+  if (srcIdx === -1) return
+  const [moved] = tiers.splice(srcIdx, 1)
+  const tgtIdx = tiers.findIndex((t) => t.id === targetId)
+  if (tgtIdx === -1) {
+    tiers.push(moved)
+    return
+  }
+  tiers.splice(position === 'after' ? tgtIdx + 1 : tgtIdx, 0, moved)
+}
+
 function addImage(src) {
   poolImages.value.push({ id: nextImageId++, src })
 }
@@ -217,6 +229,7 @@ watch(
         @drop="handleDrop"
         @rename="renameTier"
         @delete="deleteTier"
+        @reorder="reorderTier"
       />
     </div>
     <button class="add-tier-btn" @click="addTier">+ Add Row</button>
