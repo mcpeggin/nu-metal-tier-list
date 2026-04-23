@@ -1,0 +1,18 @@
+.title {
+  text-align: center;
+  color: #e0e0e0;
+  margin-bottom: 20px;
+  cursor: text;
+
+  .title-input {
+    background: transparent;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: center;
+    padding: 2px 8px;
+    width: 300px;
+  }
+}

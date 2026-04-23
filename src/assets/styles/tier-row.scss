@@ -1,0 +1,99 @@
+.tier-row {
+  display: flex;
+  min-height: 80px;
+  border: 1px solid #444;
+
+  &:hover {
+    border-color: #666;
+
+    .delete-btn {
+      opacity: 0.4;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    .tier-items {
+      background: #22224a;
+    }
+  }
+}
+
+.tier-label {
+  width: 100px;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #000;
+  user-select: none;
+  position: relative;
+}
+
+.tier-name {
+  cursor: text;
+}
+
+.tier-name-input {
+  width: 70px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #000;
+  padding: 2px;
+}
+
+.delete-btn {
+  width: 36px;
+  min-width: 36px;
+  border: none;
+  color: #22224a;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, filter 0.15s;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    filter: brightness(0.75);
+  }
+}
+
+.tier-items {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: #1a1a2e;
+  min-height: 80px;
+  transition: background 0.15s;
+
+  &.drag-over {
+    background: #2a2a4e;
+  }
+}
+
+.tier-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: grab;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: #fff;
+  }
+}
