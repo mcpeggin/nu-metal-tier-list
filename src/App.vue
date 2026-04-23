@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import TierRow from './components/TierRow.vue'
 import ImagePool from './components/ImagePool.vue'
+import { roomRef, onValue, set } from './firebase'
 
 let nextImageId = 1
 let nextTierId = 7
@@ -123,6 +124,71 @@ function onGlobalPaste(e) {
     }
   }
 }
+
+let lastSync = null
+let writeTimer = null
+let unsubscribe = null
+
+function snapshotState() {
+  return {
+    title: title.value,
+    tiers: tiers.map((t) => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+      images: (t.images || []).map((img) => ({ id: img.id, src: img.src })),
+    })),
+    poolImages: poolImages.value.map((img) => ({ id: img.id, src: img.src })),
+    nextImageId,
+    nextTierId,
+  }
+}
+
+onMounted(() => {
+  unsubscribe = onValue(roomRef, (snap) => {
+    const data = snap.val()
+    if (!data) return
+    if (typeof data.title === 'string') title.value = data.title
+    if (Array.isArray(data.tiers)) {
+      const incoming = data.tiers.map((t) => ({
+        id: t.id,
+        name: t.name,
+        color: t.color,
+        images: Array.isArray(t.images) ? t.images : [],
+      }))
+      tiers.splice(0, tiers.length, ...incoming)
+    }
+    if (Array.isArray(data.poolImages)) {
+      poolImages.value = data.poolImages
+    } else if (data.poolImages == null) {
+      poolImages.value = []
+    }
+    if (typeof data.nextImageId === 'number') nextImageId = data.nextImageId
+    if (typeof data.nextTierId === 'number') nextTierId = data.nextTierId
+    lastSync = JSON.stringify(snapshotState())
+  })
+})
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe()
+  if (writeTimer) clearTimeout(writeTimer)
+})
+
+watch(
+  [title, tiers, poolImages],
+  () => {
+    const current = JSON.stringify(snapshotState())
+    if (current === lastSync) return
+    if (writeTimer) clearTimeout(writeTimer)
+    writeTimer = setTimeout(() => {
+      lastSync = current
+      set(roomRef, JSON.parse(current)).catch((err) => {
+        console.error('Firebase write failed:', err)
+      })
+    }, 300)
+  },
+  { deep: true }
+)
 </script>
 
 <template>
